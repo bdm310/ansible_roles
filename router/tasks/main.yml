@@ -1,0 +1,71 @@
+---
+- name: Install packages
+  yum: name={{ item }} state=present update_cache=true
+  items:
+    - keepalived
+  
+- name: Enable packet forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+    
+- name: Enable forwarding for non-local IPs
+  sysctl:
+    name: net.ipv4.ip_nonlocal_bind
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes
+    
+- name: Setup external interface
+  template: src=ifcfg-eth0.j2 dest=/etc/sysconfig/network-scripts/ifcfg-eth0
+  notify: Restart network
+
+- name: Setup internal interface
+  template: src=ifcfg-eth1.j2 dest=/etc/sysconfig/network-scripts/ifcfg-eth1
+  notify: Restart network
+  
+- meta: flush_handlers
+
+- name: Remove eth0 from public
+  firewalld:
+    interface: eth0
+    zone: public
+    state: disabled
+    permanent: yes
+  notify: Reload firewalld
+
+- name: Remove eth1 from public
+  firewalld:
+    interface: eth1
+    zone: public
+    state: disabled
+    permanent: yes
+  notify: Reload firewalld
+    
+- meta: flush_handlers
+
+- name: Add eth0 to external
+  firewalld:
+    interface: eth0
+    zone: external
+    state: enabled
+    permanent: yes
+  notify: Reload firewalld
+    
+- name: Add eth1 to internal
+  firewalld:
+    interface: eth1
+    zone: internal
+    state: enabled
+    permanent: yes
+  notify: Reload firewalld
+  
+- name: Setup keepalived
+  template: src=keepalived.conf.j2 dest=/etc/keepalived/keepalived.conf
+    
+- name: Enable and start keepalived
+  service: name=keepalived enabled=yes state=started

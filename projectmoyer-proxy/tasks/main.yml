@@ -1,0 +1,8 @@
+---
+- name: Install vhost config
+  copy: src=projectmoyer.com.conf dest=/etc/nginx/conf.d/
+  become: true
+
+- name: Reload nginx
+  service: name=nginx state=reloaded
+  become: true

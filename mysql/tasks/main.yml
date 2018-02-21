@@ -1,0 +1,51 @@
+---
+- name: Install mariadb server
+  become: true
+  yum: name={{ item }} state=present update_cache=true
+  with_items:
+    - mariadb-server
+    - MySQL-python
+
+- name: Enable  and start mariadb
+  become: true
+  service: name=mariadb enabled=yes state=started
+
+- name: delete anonymous MySQL server user for {{ ansible_nodename }}
+  become: true
+  mysql_user: login_user=root
+              login_password='{{ root_db_password }}'
+              check_implicit_admin=yes
+              user=""
+              host={{ item }}
+              state="absent"
+  with_items:
+   - ""
+   - "{{ ansible_nodename }}"
+   - localhost
+
+- name: Change root user password on first run
+  become: true
+  mysql_user: login_user=root
+              login_password="{{ root_db_password }}"
+              check_implicit_admin=yes
+              name=root
+              password={{ root_db_password }}
+              priv=*.*:ALL,GRANT
+              host={{ item }}
+  with_items:
+    - "{{ ansible_nodename }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: copy .my.cnf file with root password credentials
+  become: true
+  template: src=.my.cnf dest=/root/.my.cnf owner=root mode=0600
+  
+- name: use my-medium.cnf for base
+  become: true
+  command: cp /usr/share/mysql/my-medium.cnf /etc/my.cnf
+  
+- name: remove the MySQL test database
+  become: true
+  mysql_db: name=test state=absent

@@ -1,0 +1,17 @@
+---
+- name: Install apache web server
+  yum: name=httpd state=present update_cache=true
+  become: true
+  
+- name: Enable apache
+  service: name=httpd enabled=yes
+  become: true
+
+- name: Start apache
+  service: name=httpd state=started
+  become: true
+
+- name: Setup mpm
+  copy: src=mpm.conf dest=/etc/httpd/conf.d/mpm.conf
+  notify:
+    - restart httpd
