@@ -1,6 +1,8 @@
 ---
 - name: Reload firewalld
+  become: true
   shell: firewall-cmd --complete-reload
   
 - name: Restart network
+  become: true
   systemd: name=network state=restarted
