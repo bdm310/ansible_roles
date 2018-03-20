@@ -8,6 +8,6 @@ vrrp_instance VI_1 {
  
     virtual_ipaddress {
         # virtual IP address
-        172.16.18.1/{{ router_lan_prefix }} dev eth1
+        {{ router_virt_ip }}/{{ router_lan_prefix }} dev eth1
     }
 }
